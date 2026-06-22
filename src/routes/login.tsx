@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -39,8 +40,8 @@ function LoginPage() {
       login(data.user, data.token);
       toast.success("Welcome back!");
       navigate({ to: "/dashboard" });
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid credentials");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Invalid email or password"));
     } finally {
       setLoading(false);
     }

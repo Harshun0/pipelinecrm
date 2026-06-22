@@ -1,7 +1,8 @@
 import axios from "axios";
 
+// In local dev, requests go to the backend on port 5000 (CORS allows all localhost ports).
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "",
+  baseURL: import.meta.env.VITE_API_URL ?? "",
 });
 
 api.interceptors.request.use((config) => {
