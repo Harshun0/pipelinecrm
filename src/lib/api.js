@@ -1,8 +1,8 @@
 import axios from "axios";
 
-// In local dev, requests go to the backend on port 5000 (CORS allows all localhost ports).
+// In local devs, requests go to the backend on port 5000 (CORS allows all localhost ports).
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "",
+  baseURL: import.meta.env.VITE_API_URL || 'https://pipelinecrm-backend.onrender.com',
 });
 
 api.interceptors.request.use((config) => {
