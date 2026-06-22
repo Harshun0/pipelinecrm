@@ -50,6 +50,7 @@ function NewOpportunity() {
       <Card className="border-border/60">
         <CardContent className="pt-6">
           <OpportunityForm
+            initialValues={null}
             onSubmit={handleSubmit}
             submitting={submitting}
             submitLabel="Create opportunity"
