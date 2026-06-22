@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OpportunityForm } from "@/components/OpportunityForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/opportunities/new")({
@@ -22,12 +23,14 @@ function NewOpportunity() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (_values: any) => {
+  const handleSubmit = async (values: any) => {
     setSubmitting(true);
     try {
-      await new Promise((r) => setTimeout(r, 500));
+      await api.post("/api/opportunities", values);
       toast.success("Opportunity created");
       navigate({ to: "/dashboard" });
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to create opportunity");
     } finally {
       setSubmitting(false);
     }

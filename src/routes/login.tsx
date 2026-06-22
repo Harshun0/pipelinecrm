@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -34,15 +35,12 @@ function LoginPage() {
     }
     setLoading(true);
     try {
-      // Frontend-only: simulate auth. Replace with real API call.
-      await new Promise((r) => setTimeout(r, 600));
-      const user = { id: "me", _id: "me", name: email.split("@")[0], email };
-      const token = "demo-token-" + Date.now();
-      login(user, token);
+      const { data } = await api.post("/api/auth/login", { email, password });
+      login(data.user, data.token);
       toast.success("Welcome back!");
       navigate({ to: "/dashboard" });
-    } catch (err) {
-      setError("Invalid credentials");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }

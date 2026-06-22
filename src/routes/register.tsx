@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
@@ -40,14 +41,17 @@ function RegisterPage() {
     }
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 600));
-      const user = { id: "me", _id: "me", name: form.name, email: form.email };
-      const token = "demo-token-" + Date.now();
-      login(user, token);
+      const { data } = await api.post("/api/auth/register", form);
+      login(data.user, data.token);
       toast.success("Account created!");
       navigate({ to: "/dashboard" });
-    } catch {
-      setError("Could not create account");
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message ||
+        (err.request ? "Cannot reach API server. Is the backend running on port 5000?" : null) ||
+        err.message ||
+        "Could not create account";
+      setError(message);
     } finally {
       setLoading(false);
     }

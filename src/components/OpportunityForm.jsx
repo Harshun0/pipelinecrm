@@ -35,12 +35,24 @@ function toDateInput(d) {
   }
 }
 
-export function OpportunityForm({ initialValues, onSubmit, submitting, submitLabel = "Save" }) {
-  const [values, setValues] = useState({
+function normalizeEstimatedValue(value) {
+  if (value == null || value === "") return "";
+  return String(value);
+}
+
+export function OpportunityForm({
+  initialValues,
+  onSubmit,
+  submitting,
+  submitLabel = "Save",
+  readOnly = false,
+}) {
+  const [values, setValues] = useState(() => ({
     ...EMPTY,
     ...(initialValues ?? {}),
+    estimatedValue: normalizeEstimatedValue(initialValues?.estimatedValue),
     nextFollowUpDate: toDateInput(initialValues?.nextFollowUpDate),
-  });
+  }));
   const [errors, setErrors] = useState({});
 
   const set = (key) => (e) => {
@@ -48,12 +60,22 @@ export function OpportunityForm({ initialValues, onSubmit, submitting, submitLab
     setValues((s) => ({ ...s, [key]: v }));
   };
 
+  const setEstimatedValue = (e) => {
+    const v = e.target.value;
+    if (v === "" || /^\d*\.?\d*$/.test(v)) {
+      setValues((s) => ({ ...s, estimatedValue: v }));
+    }
+  };
+
   const validate = () => {
     const e = {};
     if (!values.customerName.trim()) e.customerName = "Required";
     if (!values.requirement.trim()) e.requirement = "Required";
-    if (values.estimatedValue !== "" && Number.isNaN(Number(values.estimatedValue)))
-      e.estimatedValue = "Must be a number";
+    if (values.estimatedValue !== "") {
+      const n = Number(values.estimatedValue);
+      if (Number.isNaN(n)) e.estimatedValue = "Must be a number";
+      else if (n < 0) e.estimatedValue = "Must be zero or greater";
+    }
     if (values.contactEmail && !/^\S+@\S+\.\S+$/.test(values.contactEmail))
       e.contactEmail = "Invalid email";
     setErrors(e);
@@ -62,6 +84,7 @@ export function OpportunityForm({ initialValues, onSubmit, submitting, submitLab
 
   const handleSubmit = (ev) => {
     ev.preventDefault();
+    if (readOnly) return;
     if (!validate()) return;
     onSubmit?.({
       ...values,
@@ -77,16 +100,41 @@ export function OpportunityForm({ initialValues, onSubmit, submitting, submitLab
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Customer name" error={errors.customerName} required>
-            <Input value={values.customerName} onChange={set("customerName")} placeholder="Acme Inc." />
+            <Input
+              value={values.customerName}
+              onChange={set("customerName")}
+              placeholder="Acme Inc."
+              readOnly={readOnly}
+              disabled={readOnly}
+            />
           </Field>
           <Field label="Contact name">
-            <Input value={values.contactName} onChange={set("contactName")} placeholder="Jane Doe" />
+            <Input
+              value={values.contactName}
+              onChange={set("contactName")}
+              placeholder="Jane Doe"
+              readOnly={readOnly}
+              disabled={readOnly}
+            />
           </Field>
           <Field label="Contact email" error={errors.contactEmail}>
-            <Input type="email" value={values.contactEmail} onChange={set("contactEmail")} placeholder="jane@acme.com" />
+            <Input
+              type="email"
+              value={values.contactEmail}
+              onChange={set("contactEmail")}
+              placeholder="jane@acme.com"
+              readOnly={readOnly}
+              disabled={readOnly}
+            />
           </Field>
           <Field label="Contact phone">
-            <Input value={values.contactPhone} onChange={set("contactPhone")} placeholder="+1 555 123 4567" />
+            <Input
+              value={values.contactPhone}
+              onChange={set("contactPhone")}
+              placeholder="+1 555 123 4567"
+              readOnly={readOnly}
+              disabled={readOnly}
+            />
           </Field>
         </div>
       </section>
@@ -101,25 +149,34 @@ export function OpportunityForm({ initialValues, onSubmit, submitting, submitLab
             value={values.requirement}
             onChange={set("requirement")}
             placeholder="What does the customer need?"
+            readOnly={readOnly}
+            disabled={readOnly}
           />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Estimated value (USD)" error={errors.estimatedValue}>
             <Input
-              type="number"
-              min="0"
-              step="100"
+              type="text"
+              inputMode="decimal"
               value={values.estimatedValue}
-              onChange={set("estimatedValue")}
+              onChange={setEstimatedValue}
               placeholder="10000"
+              readOnly={readOnly}
+              disabled={readOnly}
             />
           </Field>
           <Field label="Next follow-up date">
-            <Input type="date" value={values.nextFollowUpDate} onChange={set("nextFollowUpDate")} />
+            <Input
+              type="date"
+              value={values.nextFollowUpDate}
+              onChange={set("nextFollowUpDate")}
+              readOnly={readOnly}
+              disabled={readOnly}
+            />
           </Field>
           <Field label="Stage">
-            <Select value={values.stage} onValueChange={set("stage")}>
+            <Select value={values.stage} onValueChange={set("stage")} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -127,7 +184,7 @@ export function OpportunityForm({ initialValues, onSubmit, submitting, submitLab
             </Select>
           </Field>
           <Field label="Priority">
-            <Select value={values.priority} onValueChange={set("priority")}>
+            <Select value={values.priority} onValueChange={set("priority")} disabled={readOnly}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -142,16 +199,20 @@ export function OpportunityForm({ initialValues, onSubmit, submitting, submitLab
             value={values.notes}
             onChange={set("notes")}
             placeholder="Internal notes, meeting summaries, etc."
+            readOnly={readOnly}
+            disabled={readOnly}
           />
         </Field>
       </section>
 
-      <div className="flex justify-end gap-2 border-t border-border/60 pt-4">
-        <Button type="submit" disabled={submitting}>
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {submitLabel}
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className="flex justify-end gap-2 border-t border-border/60 pt-4">
+          <Button type="submit" disabled={submitting}>
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {submitLabel}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }
